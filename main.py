@@ -229,6 +229,148 @@ st.info(
 )
 
 # ==========================================
+# [5. 기타 - 다섯 번째 구역 구분선]
+# ==========================================
+st.divider()
+
+# ==========================================
+# [다섯 번째 그래프: 월별 관객수 합계 막대그래프]
+# ==========================================
+st.header("📅 월별 전체 관객수 합계")
+
+# 1) 기준일자에서 연-월(YYYY-MM) 문자열 컬럼 추출
+daily_total_df["연월"] = daily_total_df["기준일자"].dt.to_period("M").astype(str)
+
+# 2) 월별로 관객수 합계 구하기
+monthly_total_df = (
+    daily_total_df.groupby("연월")["해당일관객수"].sum().reset_index()
+)
+
+# 3) Plotly를 이용해 월별 막대그래프 생성
+fig5 = px.bar(
+    monthly_total_df,
+    x="연월",
+    y="해당일관객수",
+    title="월별 전체 영화 관객수 합계",
+    labels={"연월": "월", "해당일관객수": "총 관객수"},
+    text_auto=".2s",  # 막대 위에 값 표시
+)
+
+# 스트림릿에 다섯 번째 그래프 출력
+st.plotly_chart(fig5, use_container_width=True)
+
+# 그래프 아래 '이 그래프로 알 수 있는 것' 문구 영역
+st.info(
+    "💡 **이 그래프로 알 수 있는 것:** 월 단위로 영화 관객 수요의 규모를"
+    " 비교할 수 있으며, 성수기(방학 시즌, 명절 등)와 비수기에 따라 전체"
+    " 극장가 관객 수가 어떻게 증감하는지 거시적인 패턴을 파악할 수 있습니다."
+)
+
+# ==========================================
+# [5. 기타 - 여섯 번째 구역 구분선]
+# ==========================================
+st.divider()
+
+# ==========================================
+# [여섯 번째 그래프: 캘린더 히트맵]
+# ==========================================
+st.header("🗓️ 주차별·요일별 관객수 캘린더 히트맵")
+
+# 1) 날짜 데이터 복사본 생성 후 월, 요일, 주차 정보 추출
+heatmap_df = daily_total_df.copy()
+heatmap_df["월"] = heatmap_df["기준일자"].dt.strftime("%Y-%m")
+heatmap_df["요일번호"] = heatmap_df["기준일자"].dt.dayofweek  # 월(0)~일(6)
+
+# 요일 이름을 순서대로 매핑하기 위한 딕셔너리
+dow_map = {
+    0: "월요일",
+    1: "화요일",
+    2: "수요일",
+    3: "목요일",
+    4: "금요일",
+    5: "토요일",
+    6: "일요일",
+}
+heatmap_df["요일"] = heatmap_df["요일번호"].map(dow_map)
+
+# 해당 월 내에서의 주차(Week of Month) 계산 로직 추가
+heatmap_df["주차"] = (
+    heatmap_df["기준일자"].dt.day - 1
+) // 7 + 1  # 1주차 ~ 5주차
+heatmap_df["주차표시"] = heatmap_df["주차"].astype(str) + "주차"
+
+# 날짜 문자열 포맷팅 (마우스 오버 시 yyyy-mm-dd 표시용)
+heatmap_df["날짜문자열"] = heatmap_df["기준일자"].dt.strftime("%Y-%m-%d")
+
+# 2) 월(주차별) × 요일별 피벗 테이블 생성 (데이터가 없는 경우 0 또는 빈값 처리)
+pivot_df = heatmap_df.pivot_table(
+    index=["월", "주차표시"],
+    columns="요일",
+    values="해당일관객수",
+    aggfunc="sum",
+).reset_index()
+
+# 요일 순서 고정 (월요일부터 일요일 순서)
+dow_order = ["월요일", "화요일", "수요일", "목요일", "금요일", "토요일", "일요일"]
+
+# 결측치를 0으로 채우기
+pivot_df = pivot_df.fillna(0)
+
+# 행 정렬을 위해 월 + 주차 조합 레이블 생성
+pivot_df["월-주차"] = pivot_df["월"] + " " + pivot_df["주차표시"]
+
+# 3) Plotly 히트맵 구현을 위해 행렬 데이터 구성
+# Y축 레이블(월-주차), X축(요일 순서)
+days_present = [d for d in dow_order if d in pivot_df.columns]
+
+# 정확한 X, Y, Z 매트릭스 구성
+heatmap_matrix = pivot_df[days_present].values
+y_labels = pivot_df["월-주차"].values
+
+# 마우스 올렸을 때 정확한 날짜(yyyy-mm-dd)를 보여주기 위해 날짜 매트릭스도 함께 구성
+# (동일한 주차-요일 구조에 대응하는 날짜 매핑)
+date_pivot = heatmap_df.pivot_table(
+    index=["월", "주차표시"],
+    columns="요일",
+    values="날짜문자열",
+    aggfunc="first",
+).reset_index()
+date_matrix = date_pivot[days_present].values
+
+fig6 = go.Figure(
+    data=go.Heatmap(
+        z=heatmap_matrix,
+        x=days_present,
+        y=y_labels,
+        customdata=date_matrix,
+        hovertemplate=(
+            "날짜: %{customdata}<br>요일: %{x}<br>관객수 합계:"
+            " %{z:,.0f}명<extra></extra>"
+        ),
+        colorscale="YlOrRd",  # 진할수록 관객이 많은 컬러 스케일
+        colorbar=dict(title="관객수"),
+    )
+)
+
+fig6.update_layout(
+    title="월별 주차 및 요일별 일일 관객수 히트맵",
+    xaxis_title="요일",
+    yaxis_title="월 및 주차",
+    yaxis=dict(autorange="reversed"),  # 최신순 혹은 상단 배치를 위해 역순 정렬 옵션
+)
+
+# 스트림릿에 여섯 번째 그래프 출력
+st.plotly_chart(fig6, use_container_width=True)
+
+# 그래프 아래 '이 그래프로 알 수 있는 것' 문구 영역
+st.info(
+    "💡 **이 그래프로 알 수 있는 것:** 특정 월의 어느 주차, 어떤 요일에 관객이"
+    " 가장 많이 집중되는지 직관적인 색상 농도를 통해 파악할 수 있으며, 마우스"
+    " 포인터를 올려 구체적인 날짜(yyyy-mm-dd)와 관객 수치를 정밀하게"
+    " 대조해 볼 수 있습니다."
+)
+
+# ==========================================
 # [5. 기타 - 앞으로 추가될 구역 미리보기]
 # ==========================================
 st.divider()
