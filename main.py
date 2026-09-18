@@ -23,7 +23,7 @@ def load_data():
         .apply(lambda x: x.split("|")[0] if "|" in x else x)
     )
 
-  # 총 관객수 및 개봉일 스크린수 숫자로 변환 (변환 불가 값은 NaN 처리 후 0으로 채우기)
+  # 총 관객수 숫자로 변환 (변환 불가 값은 NaN 처리 후 0으로 채우기)
   if "total_audi" in df.columns:
     df["total_audi"] = pd.to_numeric(
         df["total_audi"], errors="coerce"
@@ -109,22 +109,14 @@ st.markdown("---")
 # -------------------------------------------------------------------------
 st.subheader("📈 총 관객수 분포 히스토그램")
 
-# Plotly 히스토그램 생성
+# Plotly 히스토그램 생성 (안정적인 기본 설정 사용)
 fig_hist = px.histogram(
     df,
     x="total_audi",
     nbins=30,
     labels={"total_audi": "총 관객 수", "count": "영화 편수"},
-    custom_data=["movieNm", "total_audi"],
 )
 
-fig_hist.update_traces(
-    hovertemplate=(
-        "<b>총 관객 구간:</b> %{x:,.0f}명<br>"
-        "<b>해당 영화 편수:</b> %{y}편<br>"
-        "<extra></extra>"
-    )
-)
 fig_hist.update_layout(
     xaxis_title="총 관객 수", yaxis_title="영화 편수 (빈도)", height=500
 )
