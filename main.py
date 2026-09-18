@@ -23,9 +23,11 @@ def load_data():
         .apply(lambda x: x.split("|")[0] if "|" in x else x)
     )
 
-  # 총 관객수 숫자로 변환 (결측치는 0으로 처리)
+  # 총 관객수 숫자로 변환 (변환 불가 값은 NaN 처리 후 0으로 채우기)
   if "total_audi" in df.columns:
-    df["total_audi"] = pd.to_numeric(df["total_audi"], errors="fillna").fillna(0)
+    df["total_audi"] = pd.to_numeric(
+        df["total_audi"], errors="coerce"
+    ).fillna(0)
 
   return df
 
