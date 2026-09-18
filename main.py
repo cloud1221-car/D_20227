@@ -44,7 +44,7 @@ fig_genre = px.pie(
     genre_counts,
     names="genre",
     values="count",
-    hole=0.4,  # 도넛 형태를 위한 구멍 크기
+    hole=0.4,
     labels={"genre": "장르", "count": "편수"},
 )
 fig_genre.update_traces(textposition="inside", textinfo="percent+label")
