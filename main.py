@@ -13,9 +13,15 @@ st.set_page_config(
 def load_data():
   url = "https://raw.githubusercontent.com/greatsong/modudata/main/data/kobis_movies.csv"
   df = pd.read_csv(url)
-  # 장르가 세로막대(|)로 구분된 경우 첫 번째 장르만 추출
+
+  # 장르 전처리 (결측값 처리 및 첫 번째 장르 추출)
   if "genre" in df.columns:
-    df["genre"] = df["genre"].astype(str).apply(lambda x: x.split("|")[0])
+    df["genre"] = (
+        df["genre"]
+        .fillna("기타")
+        .astype(str)
+        .apply(lambda x: x.split("|")[0] if "|" in x else x)
+    )
   return df
 
 
