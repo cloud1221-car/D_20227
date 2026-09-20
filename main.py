@@ -23,6 +23,10 @@ def load_data():
         .apply(lambda x: x.split("|")[0] if "|" in x else x)
     )
 
+  # 제작 국가 결측치 처리
+  if "nation" in df.columns:
+    df["nation"] = df["nation"].fillna("기타")
+
   # 숫자형 데이터 변환 (변환 불가 값은 NaN 처리 후 0으로 채우기)
   numeric_cols = ["total_audi", "first_scrn", "first_week_audi"]
   for col in numeric_cols:
@@ -256,4 +260,28 @@ st.info(
     "점의 크기로 표현된 첫 주 관객수(버블 크기)를 통해, 초기 상영 규모와"
     " 총 관객 규모뿐만 아니라 **개봉 첫 주에 얼마나 폭발적인 관객을"
     " 모았는지** 입체적인 흥행 패턴을 한눈에 비교할 수 있습니다."
+)
+
+st.markdown("---")
+
+# -------------------------------------------------------------------------
+# 일곱 번째 그래프: 제작 국가에서 장르로 내려가는 선버스트 그래프
+# -------------------------------------------------------------------------
+st.subheader("☀️ 제작 국가 및 장르별 영화 편수 선버스트 그래프")
+
+# Plotly 선버스트 생성 (path: nation -> genre, 편수 기준)
+fig_sunburst = px.sunburst(
+    df, path=["nation", "genre"], labels={"nation": "제작 국가", "genre": "장르"}
+)
+
+fig_sunburst.update_traces(textinfo="label+percent parent")
+fig_sunburst.update_layout(margin=dict(t=30, b=30, l=30, r=30), height=600)
+
+st.plotly_chart(fig_sunburst, use_container_width=True)
+
+st.markdown("### 💡 이 그래프로 알 수 있는 것")
+st.info(
+    "제작 국가(안쪽 원)를 기준으로 어떤 국가의 영화들이 주로 수급되며,"
+    " 각 국가별로 어떤 장르(바깥쪽 원)가 주를 이루어 제작·배급되는지 영화"
+    " 편수 기준의 계층적 비중을 시각적으로 파악할 수 있습니다."
 )
