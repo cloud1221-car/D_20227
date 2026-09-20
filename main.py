@@ -1,4 +1,9 @@
 import pandas as pd
+import streamlit as st
+
+# CSV 파일이나 엑셀 파일 경로에 맞게 수정해주세요
+df = pd.read_csv("your_data_file.csv")
+import pandas as pd
 import plotly.express as px
 
 # 데이터프레임 변수명이 'df'라고 가정합니다.
