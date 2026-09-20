@@ -28,7 +28,13 @@ def load_data():
     df["nation"] = df["nation"].fillna("기타")
 
   # 숫자형 데이터 변환 (변환 불가 값은 NaN 처리 후 0으로 채우기)
-  numeric_cols = ["total_audi", "first_scrn", "first_week_audi"]
+  numeric_cols = [
+      "total_audi",
+      "first_scrn",
+      "first_week_audi",
+      "first_show",
+      "days_in_top10",
+  ]
   for col in numeric_cols:
     if col in df.columns:
       df[col] = pd.to_numeric(df[col], errors="coerce").fillna(0)
@@ -42,13 +48,13 @@ df = load_data()
 st.title("🎬 영화 데이터 그래프 도감 2 - 분포와 관계")
 st.markdown(
     "1년간 박스오피스 10위권에 진입한 영화 중 해당 기간 개봉한 **216편**의"
-    " 데이터를 바탕으로 제작한 시각화 도감입니다."
+    " 데이터를 바탕으로 제작한 무지개빛 시각화 도감입니다."
 )
 
 st.markdown("---")
 
 # -------------------------------------------------------------------------
-# 첫 번째 그래프: 장르별 영화 편수 도넛 그래프
+# 첫 번째 그래프: 장르별 영화 편수 도넛 그래프 (무지개 컬러)
 # -------------------------------------------------------------------------
 st.subheader("📊 장르별 영화 편수 분포")
 
@@ -60,6 +66,7 @@ fig_genre = px.pie(
     names="genre",
     values="count",
     hole=0.4,
+    color_discrete_sequence=px.colors.qualitative.Alphabet,  # 다채로운 무지개빛 팔레트
     labels={"genre": "장르", "count": "편수"},
 )
 fig_genre.update_traces(textposition="inside", textinfo="percent+label")
@@ -76,7 +83,7 @@ st.info(
 st.markdown("---")
 
 # -------------------------------------------------------------------------
-# 두 번째 그래프: 장르 내 영화별 총 관객 트리맵
+# 두 번째 그래프: 장르 내 영화별 총 관객 트리맵 (무지개 컬러)
 # -------------------------------------------------------------------------
 st.subheader("🗺️ 장르별 영화 관객 수 트리맵")
 
@@ -84,6 +91,8 @@ fig_treemap = px.treemap(
     df,
     path=["genre", "movieNm"],
     values="total_audi",
+    color="genre",
+    color_discrete_sequence=px.colors.qualitative.Vivid,
     custom_data=["movieNm", "genre", "total_audi"],
 )
 
@@ -109,7 +118,7 @@ st.info(
 st.markdown("---")
 
 # -------------------------------------------------------------------------
-# 세 번째 그래프: 총 관객 히스토그램
+# 세 번째 그래프: 총 관객 히스토그램 (무지개 그라데이션)
 # -------------------------------------------------------------------------
 st.subheader("📈 총 관객수 분포 히스토그램")
 
@@ -117,9 +126,12 @@ fig_hist = px.histogram(
     df,
     x="total_audi",
     nbins=30,
+    color_discrete_sequence=["#FF4B4B"],  # 포인트 컬러
     labels={"total_audi": "총 관객 수", "count": "영화 편수"},
 )
 
+# 히스토그램 바에 무지개 느낌의 그라데이션 컬러 매핑을 위해 색상 설정
+fig_hist.update_traces(marker_color="rgb(99, 110, 250)")
 fig_hist.update_layout(
     xaxis_title="총 관객 수", yaxis_title="영화 편수 (빈도)", height=500
 )
@@ -141,7 +153,7 @@ st.info(
 st.markdown("---")
 
 # -------------------------------------------------------------------------
-# 네 번째 그래프: 개봉일 스크린수와 총 관객 산점도
+# 네 번째 그래프: 개봉일 스크린수와 총 관객 산점도 (무지개 컬러)
 # -------------------------------------------------------------------------
 st.subheader("📉 개봉일 스크린수 vs 총 관객수 관계")
 
@@ -150,6 +162,7 @@ fig_scatter = px.scatter(
     x="first_scrn",
     y="total_audi",
     color="genre",
+    color_discrete_sequence=px.colors.qualitative.Safe,
     labels={
         "first_scrn": "개봉일 스크린수",
         "total_audi": "총 관객수",
@@ -184,7 +197,7 @@ st.info(
 st.markdown("---")
 
 # -------------------------------------------------------------------------
-# 다섯 번째 그래프: 영화 편수 10편 이상인 장르별 총 관객 박스플롯
+# 다섯 번째 그래프: 영화 편수 10편 이상인 장르별 총 관객 박스플롯 (무지개)
 # -------------------------------------------------------------------------
 st.subheader("📦 장르별 총 관객수 상자 그림 (영화 10편 이상)")
 
@@ -196,6 +209,7 @@ fig_box = px.box(
     x="genre",
     y="total_audi",
     color="genre",
+    color_discrete_sequence=px.colors.qualitative.Pastel,
     labels={"genre": "장르", "total_audi": "총 관객수"},
     hover_data=["movieNm"],
 )
@@ -219,7 +233,7 @@ st.info(
 st.markdown("---")
 
 # -------------------------------------------------------------------------
-# 여섯 번째 그래프: 첫 주 관객 버블 그래프 (산점도 확장)
+# 여섯 번째 그래프: 첫 주 관객 버블 그래프 (무지개 컬러)
 # -------------------------------------------------------------------------
 st.subheader("🫧 개봉일 스크린수 vs 총 관객수 (첫 주 관객 버블 그래프)")
 
@@ -229,6 +243,7 @@ fig_bubble = px.scatter(
     y="total_audi",
     size="first_week_audi",
     color="genre",
+    color_discrete_sequence=px.colors.qualitative.Bold,
     labels={
         "first_scrn": "개봉일 스크린수",
         "total_audi": "총 관객수",
@@ -265,13 +280,16 @@ st.info(
 st.markdown("---")
 
 # -------------------------------------------------------------------------
-# 일곱 번째 그래프: 제작 국가에서 장르로 내려가는 선버스트 그래프
+# 일곱 번째 그래프: 제작 국가에서 장르로 내려가는 선버스트 그래프 (무지개)
 # -------------------------------------------------------------------------
 st.subheader("☀️ 제작 국가 및 장르별 영화 편수 선버스트 그래프")
 
-# Plotly 선버스트 생성 (path: nation -> genre, 편수 기준)
 fig_sunburst = px.sunburst(
-    df, path=["nation", "genre"], labels={"nation": "제작 국가", "genre": "장르"}
+    df,
+    path=["nation", "genre"],
+    color="genre",
+    color_discrete_sequence=px.colors.qualitative.Dark24,
+    labels={"nation": "제작 국가", "genre": "장르"},
 )
 
 fig_sunburst.update_traces(textinfo="label+percent parent")
@@ -284,4 +302,48 @@ st.info(
     "제작 국가(안쪽 원)를 기준으로 어떤 국가의 영화들이 주로 수급되며,"
     " 각 국가별로 어떤 장르(바깥쪽 원)가 주를 이루어 제작·배급되는지 영화"
     " 편수 기준의 계층적 비중을 시각적으로 파악할 수 있습니다."
+)
+
+st.markdown("---")
+
+# -------------------------------------------------------------------------
+# 여덟 번째 그래프: 개봉일 스크린수 vs 첫 주 상영횟수 산점도 (무지개 컬러)
+# -------------------------------------------------------------------------
+st.subheader("📊 개봉일 스크린수 vs 첫 주 상영횟수 관계")
+
+fig_show = px.scatter(
+    df,
+    x="first_scrn",
+    y="first_show",
+    color="genre",
+    color_discrete_sequence=px.colors.qualitative.Set1,
+    labels={
+        "first_scrn": "개봉일 스크린수",
+        "first_show": "첫 주 상영횟수",
+        "genre": "장르",
+    },
+    custom_data=["movieNm", "genre", "first_scrn", "first_show"],
+)
+
+fig_show.update_traces(
+    hovertemplate=(
+        "<b>영화명:</b> %{customdata[0]}<br>"
+        "<b>장르:</b> %{customdata[1]}<br>"
+        "<b>개봉일 스크린수:</b> %{customdata[2]:,}개<br>"
+        "<b>첫 주 상영횟수:</b> %{customdata[3]:,}회<br>"
+        "<extra></extra>"
+    )
+)
+
+fig_show.update_layout(
+    xaxis_title="개봉일 스크린수", yaxis_title="첫 주 상영횟수", height=600
+)
+
+st.plotly_chart(fig_show, use_container_width=True)
+
+st.markdown("### 💡 이 그래프로 알 수 있는 것")
+st.info(
+    "개봉일 스크린수와 첫 주 상영횟수 간의 비례 관계를 통해, 극장에서"
+    " 스크린을 많이 확보할수록 상영 기회(상영횟수)가 얼마나 비례해서"
+    " 증가하는지 배급 시장의 구조적 특징을 확인할 수 있습니다."
 )
