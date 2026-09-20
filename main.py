@@ -24,7 +24,7 @@ def load_data():
     )
 
   # 숫자형 데이터 변환 (변환 불가 값은 NaN 처리 후 0으로 채우기)
-  numeric_cols = ["total_audi", "first_scrn"]
+  numeric_cols = ["total_audi", "first_scrn", "first_week_audi"]
   for col in numeric_cols:
     if col in df.columns:
       df[col] = pd.to_numeric(df[col], errors="coerce").fillna(0)
@@ -184,11 +184,9 @@ st.markdown("---")
 # -------------------------------------------------------------------------
 st.subheader("📦 장르별 총 관객수 상자 그림 (영화 10편 이상)")
 
-# 편수가 10편 이상인 장르 목록 추출
 valid_genres = genre_counts[genre_counts["count"] >= 10]["genre"].tolist()
 df_filtered = df[df["genre"].isin(valid_genres)]
 
-# Plotly 박스플롯 생성 (hover_data에 영화명 포함)
 fig_box = px.box(
     df_filtered,
     x="genre",
@@ -212,4 +210,50 @@ st.info(
     "상영작이 풍부한 주요 장르들 간의 관객 수 중앙값과 분포 범위를"
     " 비교할 수 있으며, 특히 상자 밖으로 튀어나온 이상치(아웃라이어)를 통해"
     " 각 장르별 초대박 흥행작들의 특성과 편차를 파악할 수 있습니다."
+)
+
+st.markdown("---")
+
+# -------------------------------------------------------------------------
+# 여섯 번째 그래프: 첫 주 관객 버블 그래프 (산점도 확장)
+# -------------------------------------------------------------------------
+st.subheader("🫧 개봉일 스크린수 vs 총 관객수 (첫 주 관객 버블 그래프)")
+
+fig_bubble = px.scatter(
+    df,
+    x="first_scrn",
+    y="total_audi",
+    size="first_week_audi",
+    color="genre",
+    labels={
+        "first_scrn": "개봉일 스크린수",
+        "total_audi": "총 관객수",
+        "genre": "장르",
+        "first_week_audi": "첫 주 관객",
+    },
+    custom_data=["movieNm", "genre", "first_scrn", "first_week_audi", "total_audi"],
+)
+
+fig_bubble.update_traces(
+    hovertemplate=(
+        "<b>영화명:</b> %{customdata[0]}<br>"
+        "<b>장르:</b> %{customdata[1]}<br>"
+        "<b>개봉일 스크린수:</b> %{customdata[2]:,}개<br>"
+        "<b>첫 주 관객:</b> %{customdata[3]:,}명<br>"
+        "<b>총 관객수:</b> %{customdata[4]:,}명<br>"
+        "<extra></extra>"
+    )
+)
+
+fig_bubble.update_layout(
+    xaxis_title="개봉일 스크린수", yaxis_title="총 관객수", height=600
+)
+
+st.plotly_chart(fig_bubble, use_container_width=True)
+
+st.markdown("### 💡 이 그래프로 알 수 있는 것")
+st.info(
+    "점의 크기로 표현된 첫 주 관객수(버블 크기)를 통해, 초기 상영 규모와"
+    " 총 관객 규모뿐만 아니라 **개봉 첫 주에 얼마나 폭발적인 관객을"
+    " 모았는지** 입체적인 흥행 패턴을 한눈에 비교할 수 있습니다."
 )
